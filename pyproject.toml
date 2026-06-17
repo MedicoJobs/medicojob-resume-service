@@ -1,0 +1,5 @@
+[project]
+name = "medicojob-resume-service"
+version = "1.0.0"
+description = "FastAPI Resume Intelligence Agent for MedicoJobs"
+requires-python = ">=3.11,<3.13"

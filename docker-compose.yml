@@ -1,0 +1,42 @@
+services:
+  resume-service:
+    build: .
+    container_name: medicojob-resume-service
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/medicojobs_resume
+      OPENSEARCH_HOST: http://opensearch:9200
+    ports:
+      - "5008:5008"
+    depends_on:
+      - postgres
+      - opensearch
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: medicojobs_resume
+    ports:
+      - "5432:5432"
+    volumes:
+      - resume-postgres-data:/var/lib/postgresql/data
+      - ./app/db/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: Admin@12345
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - resume-opensearch-data:/usr/share/opensearch/data
+
+volumes:
+  resume-postgres-data:
+  resume-opensearch-data:
