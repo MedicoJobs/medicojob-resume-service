@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     enable_s3_upload: bool = False
     enable_opensearch_indexing: bool = False
     enable_llm: bool = False
+    persist_resume_analysis: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
