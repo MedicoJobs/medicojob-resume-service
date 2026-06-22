@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     api_prefix: str = "/api/resume"
     max_upload_bytes: int = 10 * 1024 * 1024
-    jwt_secret: str = "change-me"
+    jwt_secret: str = "local-dev-secret"
     jwt_algorithm: str = "HS256"
 
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/medicojobs_resume"
