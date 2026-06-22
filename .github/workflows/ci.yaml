@@ -20,7 +20,6 @@ concurrency:
 
 env:
   SERVICE_NAME: medicojob-resume-service
-  RUNTIME: python
   SONAR_PROJECT_KEY: MedicoJobs_medicojob-resume-service
 
 jobs:
@@ -42,57 +41,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        if: env.RUNTIME == 'node'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install Node dependencies
-        if: env.RUNTIME == 'node'
-        run: npm ci
-
-      - name: Run Node tests when configured
-        if: env.RUNTIME == 'node'
-        shell: bash
-        run: |
-          test_script="$(node -e "const p=require('./package.json'); console.log((p.scripts && p.scripts.test) || '')")"
-          if [ -z "$test_script" ] || echo "$test_script" | grep -qi 'no test specified'; then
-            echo "No real npm test script configured for $SERVICE_NAME."
-          else
-            CI=true npm test
-          fi
-
-      - name: Run Node build when configured
-        if: env.RUNTIME == 'node'
-        shell: bash
-        run: |
-          build_script="$(node -e "const p=require('./package.json'); console.log((p.scripts && p.scripts.build) || '')")"
-          if [ -z "$build_script" ]; then
-            echo "No npm build script configured for $SERVICE_NAME."
-          else
-            npm run build
-          fi
-
       - name: Setup Python
-        if: env.RUNTIME == 'python'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
 
       - name: Install Python dependencies
-        if: env.RUNTIME == 'python'
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest
+          pip install -r requirements.txt
 
       - name: Run Python tests when configured
-        if: env.RUNTIME == 'python'
         shell: bash
         run: |
           if find . -maxdepth 3 -type f \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then
@@ -101,8 +62,7 @@ jobs:
             echo "No Python tests found for $SERVICE_NAME."
           fi
 
-      - name: SonarCloud branch scan and quality gate
-        if: github.event_name == 'push'
+      - name: SonarCloud scan and quality gate
         uses: SonarSource/sonarqube-scan-action@v7.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -112,23 +72,7 @@ jobs:
             -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
             -Dsonar.projectName=${{ env.SERVICE_NAME }}
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-            -Dsonar.branch.name=${{ github.ref_name }}
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.qualitygate.timeout=600
 
-      - name: SonarCloud pull request scan and quality gate
-        if: github.event_name == 'pull_request'
-        uses: SonarSource/sonarqube-scan-action@v7.1.0
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-        with:
-          args: >-
-            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
-            -Dsonar.projectName=${{ env.SERVICE_NAME }}
-            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.qualitygate.timeout=600
   snyk_scan:
     name: snyk-scan / snyk
     runs-on: ubuntu-latest
@@ -140,31 +84,17 @@ jobs:
       - name: Checkout service
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        if: env.RUNTIME == 'node'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install Node dependencies
-        if: env.RUNTIME == 'node'
-        run: npm ci
-
       - name: Setup Python
-        if: env.RUNTIME == 'python'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
 
       - name: Install Python dependencies
-        if: env.RUNTIME == 'python'
         shell: bash
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt
 
       - name: Setup Snyk
         uses: snyk/actions/setup@master
@@ -177,11 +107,7 @@ jobs:
             exit 1
           fi
 
-          if [ "$RUNTIME" = "node" ]; then
-            snyk test --file=package-lock.json --severity-threshold=high || true
-          else
-            snyk test --file=requirements.txt --package-manager=pip --severity-threshold=high || true
-          fi
+          snyk test --file=requirements.txt --package-manager=pip --severity-threshold=high || true
 
   snyk_summary:
     name: snyk-scan / Snyk summary
@@ -240,7 +166,3 @@ jobs:
           failure_reason: |
             ${{ steps.failure.outputs.reason }}
             The pull request must not be merged until validation passes.
-
-
-
-
