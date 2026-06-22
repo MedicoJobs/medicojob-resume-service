@@ -3,6 +3,7 @@ name: ci.yaml - medicojob-resume-service
 on:
   pull_request:
     branches:
+      - master
       - main
     types:
       - opened
