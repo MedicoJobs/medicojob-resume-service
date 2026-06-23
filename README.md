@@ -4,6 +4,11 @@ FastAPI service for extracting structured healthcare candidate data from PDF, DO
 
 ## Endpoint
 
+
+
+
+
+
 `POST /api/resume/upload`
 
 Headers:
