@@ -20,6 +20,6 @@ class ResumeStorage:
         if not self.settings.enable_s3_upload:
             return None
 
-        key = f"resumes/{uuid4()}-{filename}"
+        key = f"resume-pdfs/{uuid4()}-{filename}"
         self.client.put_object(Bucket=self.settings.s3_bucket, Key=key, Body=data, ContentType=content_type)
         return key
